@@ -1,6 +1,7 @@
 import { zodToJsonSchema } from "zod-to-json-schema";
+import { z } from "zod";
 
-import { GetConsoleLogsTool, ScreenshotTool } from "@repo/types/mcp/tool";
+import { GetConsoleLogsTool } from "@repo/types/mcp/tool";
 
 import { Tool } from "./tool";
 
@@ -24,16 +25,25 @@ export const getConsoleLogs: Tool = {
   },
 };
 
+// Enhanced Screenshot Tool schema with fullPage support
+const ScreenshotToolArgs = z.object({
+  fullPage: z.boolean().optional().describe("Whether to capture the full page or just the viewport"),
+});
+
 export const screenshot: Tool = {
   schema: {
-    name: ScreenshotTool.shape.name.value,
-    description: ScreenshotTool.shape.description.value,
-    inputSchema: zodToJsonSchema(ScreenshotTool.shape.arguments),
+    name: "screenshot",
+    description: "Take a screenshot of the current page. Supports both viewport and full page capture.",
+    inputSchema: zodToJsonSchema(ScreenshotToolArgs),
   },
-  handle: async (context, _params) => {
+  handle: async (context, params) => {
+    // Parse and validate parameters
+    const validatedParams = ScreenshotToolArgs.parse(params || {});
+    
+    // Pass fullPage parameter to browser extension
     const screenshot = await context.sendSocketMessage(
       "browser_screenshot",
-      {},
+      validatedParams,
     );
     return {
       content: [
