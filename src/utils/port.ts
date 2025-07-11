@@ -19,7 +19,7 @@ export function killProcessOnPort(port: number) {
         `FOR /F "tokens=5" %a in ('netstat -ano ^| findstr :${port}') do taskkill /F /PID %a`,
       );
     } else {
-      execSync(`lsof -ti:${port} | xargs kill -9`);
+      execSync(`pids=$(lsof -ti:${port} 2>/dev/null) && [ -n "$pids" ] && echo "$pids" | xargs kill -9 || true`);
     }
   } catch (error) {
     console.error(`Failed to kill process on port ${port}:`, error);
