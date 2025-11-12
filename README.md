@@ -12,6 +12,11 @@
   <a href="https://docs.browsermcp.io"><strong>Docs</strong></a>
 </p>
 
+## My Version
+
+- Merged [feat: add network monitoring capabilities](https://github.com/BrowserMCP/mcp/pull/132)
+- Merged [Add browser_new_page tool for opening URLs in new tabs](https://github.com/BrowserMCP/mcp/pull/136)
+
 ## About
 
 Browser MCP is an MCP server + Chrome extension that allows you to automate your browser using AI applications like VS Code, Claude, Cursor, and Windsurf.
