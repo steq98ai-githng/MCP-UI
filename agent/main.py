@@ -12,7 +12,7 @@ def parse_arguments():
     """Parses command-line arguments."""
     parser = argparse.ArgumentParser(description="AI Agent for Browser MCP")
     # The server address should use the WebSocket protocol (ws://)
-    parser.add_argument("--mcp_server", default="ws://localhost:3000",
+    parser.add_argument("--mcp_server", default="ws://localhost:9002",
                         help="The WebSocket address of the Browser MCP server.")
     return parser.parse_args()
 
