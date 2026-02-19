@@ -36,7 +36,13 @@ async def agent_loop(server_address, model):
 
             # Main loop to process messages
             async for message in websocket:
-                print(f"< Received from server: {message}")
+                # Truncate message for logging to avoid exposing sensitive data.
+                # Handle both string and binary messages.
+                if isinstance(message, bytes):
+                    log_message = f"<{len(message)} bytes of binary data>"
+                else:
+                    log_message = (message[:20] + '...') if len(message) > 20 else message
+                print(f"< Received from server: {log_message}")
 
                 # Use the AI model to generate a response
                 try:
@@ -46,7 +52,12 @@ async def agent_loop(server_address, model):
                     response = model.generate_content(prompt)
                     ai_response = response.text
 
-                    print(f"> Sending to server: {ai_response}")
+                    # Truncate AI response for logging to avoid exposing sensitive data
+                    if isinstance(ai_response, bytes):
+                        log_ai_response = f"<{len(ai_response)} bytes of binary data>"
+                    else:
+                        log_ai_response = (ai_response[:20] + '...') if len(ai_response) > 20 else ai_response
+                    print(f"> Sending to server: {log_ai_response}")
                     await websocket.send(ai_response)
 
                 except Exception as e:
