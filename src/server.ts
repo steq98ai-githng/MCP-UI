@@ -88,8 +88,9 @@ export async function createServerWithTools(options: Options): Promise<Server> {
     return { contents };
   });
 
+  const baseClose = server.close;
   server.close = async () => {
-    await server.close();
+    await baseClose.call(server);
     await wss.close();
     await context.close();
   };
