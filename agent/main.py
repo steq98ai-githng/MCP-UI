@@ -1,8 +1,12 @@
 import os
-import google.generativeai as genai
+try:
+    import google.generativeai as genai
+except ImportError:
+    genai = None
 import argparse
 import asyncio
 import websockets
+import sys
 
 # --- Configuration ---
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -19,11 +23,20 @@ def parse_arguments():
 # --- AI Model Initialization ---
 def initialize_ai_model():
     """Initializes the Google Gemini model."""
+    if genai is None:
+        raise RuntimeError(
+            "Missing dependency: 'google-generativeai' not installed. "
+            "Install it with: pip install google-generativeai"
+        )
     if not GOOGLE_API_KEY:
         raise ValueError("GOOGLE_API_KEY environment variable not set.")
 
     genai.configure(api_key=GOOGLE_API_KEY)
-    model = genai.GenerativeModel('gemini-pro')
+    # Prefer GenerativeModel if available; otherwise keep module as a fallback
+    if hasattr(genai, "GenerativeModel"):
+        model = genai.GenerativeModel("gemini-pro")
+    else:
+        model = genai
     return model
 
 # --- Core Agent Logic ---
@@ -43,8 +56,24 @@ async def agent_loop(server_address, model):
                     # This is a simple prompt for demonstration purposes.
                     # A more complex implementation would involve structured prompts.
                     prompt = f"Based on the following browser context, what is the next logical action? Context: {message}"
-                    response = model.generate_content(prompt)
-                    ai_response = response.text
+                    # Call the model API (support sync or async responses)
+                    result = model.generate_content(prompt)
+                    if asyncio.iscoroutine(result):
+                        response = await result
+                    else:
+                        response = result
+
+                    # Extract text from common response shapes
+                    if hasattr(response, "text"):
+                        ai_response = response.text
+                    elif isinstance(response, dict):
+                        ai_response = (
+                            response.get("candidates", [{}])[0].get("content")
+                            or response.get("text")
+                            or str(response)
+                        )
+                    else:
+                        ai_response = str(response)
 
                     print(f"> Sending to server: {ai_response}")
                     await websocket.send(ai_response)
@@ -72,8 +101,10 @@ async def main():
     try:
         model = initialize_ai_model()
         print("Google Gemini model initialized successfully.")
-    except ValueError as e:
+    except (ValueError, RuntimeError) as e:
         print(f"Error initializing AI model: {e}")
+        if isinstance(e, RuntimeError) and "Missing dependency" in str(e):
+            print("Install dependencies: pip install -r requirements.txt")
         return
 
     await agent_loop(args.mcp_server, model)

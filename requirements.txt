@@ -1,0 +1,5 @@
+# Required dependencies for the AI agent
+google-generativeai>=0.22.0
+websockets>=10.4
+# Optional for local env vars
+python-dotenv>=0.21.0
